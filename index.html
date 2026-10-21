@@ -37,8 +37,10 @@ button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 1
 // ===== Settings =====
 const SHEET_ID="1SLqehjIKQ69Mwb3uUaByM2bqwMBhSNlxluruAtyAamQ";
 const TAB=n=>"https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);
-const ACQ_URL=TAB("Contractor  ACQ ");
-const SALARY_URL=TAB("Star salary");
+const PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRpdsHqNytYDH9FgSCI9iRduq8BSvS5zZkrr2VFMDahSR7TJHElHhSLuKil8PUSQg3Tq5CcV1y-w8hi/pub";
+const SALARY_GID=""; // gid of "Star salary" tab
+const ACQ_URL=[PUB+"?output=csv",TAB("Contractor  ACQ ")];
+const SALARY_URL=[SALARY_GID?PUB+"?gid="+SALARY_GID+"&single=true&output=csv":null,PUB+"?output=csv&sheet="+encodeURIComponent("Star salary"),TAB("Star salary")].filter(Boolean);
 const REFRESH_MIN=2;
 const ACCOUNTS=[
  {
@@ -211,13 +213,13 @@ function logout(){try{sessionStorage.removeItem('u')}catch(_){}location.reload()
 function start(u){U=u;$('login').style.display='none';$('app').style.display='block';$('ttl').textContent=u.contractor=='*'?'All Contractors (Admin)':u.contractor;
  if(u.contractor!='*'){$('fcw').style.display='none';$('fc2w').style.display='none'}load();setInterval(load,REFRESH_MIN*60000)}
 function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':''}
-const get=u=>fetch(u+(u.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text()).then(t=>Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data);
+async function get(list,need){let err;for(const u of list){try{const r=await fetch(u+'&t='+Date.now());if(!r.ok)throw Error('HTTP '+r.status);const t=await r.text();if(/^\s*</.test(t))throw Error('not CSV');const d=Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;if(d.length&&need in d[0])return d;throw Error('wrong tab')}catch(e){err=e}}throw err}
 const col=(r,re)=>Object.keys(r).find(k=>re.test(k));
 const mine=r=>{const k=col(r,/contractor|مقاول/i);return U.contractor=='*'||N(r[k])==N(U.contractor)};
 function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
 const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'';
-async function load(){try{const a=await get(ACQ_URL);A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));
- S=(await get(SALARY_URL)).filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));
+async function load(){try{const a=await get(ACQ_URL,'status of star');A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));
+ S=(await get(SALARY_URL,'#Working').catch(e=>{$('tb2').dataset.err=1;return []})).filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));
  fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));fill('fc2',S.map(r=>r.Contractor));
  $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_MIN+' min';r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
 function fill(id,vals){const s=$(id),c=s.value,u=[...new Set(vals.filter(Boolean).map(v=>v.trim()))].sort();s.innerHTML='<option value="">All</option>'+u.map(v=>`<option>${v}</option>`).join('');s.value=c}
@@ -231,7 +233,7 @@ function r1(){const f1=$('f1').value,f2=$('f2').value,fs=$('fs').value,fh=$('fh'
  const t=iso(new Date());kp('k1',[['Total Stars',R.length],['New Star',R.filter(r=>N(r['status of star'])=='new star').length],['Reactivate',R.filter(r=>N(r['status of star'])=='reactivate').length],['Joined Today',R.filter(r=>iso(r._d)==t).length],['Hubs',new Set(R.map(r=>r.Hub)).size]]);
  R.forEach(r=>r._ds=iso(r._d));
  table('tb1',[['_ds','Joined At'],['Star Id','Star Id'],['Full Name','Name'],['Hub','Hub'],['Star Fawry Id','Fawry Id'],['Vehicle Type','Vehicle'],['contractor','Contractor'],['status of star','Status',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
-function r2(){if(!S.length){$('tb2').innerHTML='<p class=mu>No data</p>';$('k2').innerHTML='';return}
+function r2(){if(!S.length){$('tb2').innerHTML=$('tb2').dataset.err?'<p class=err>Could not load Star salary tab — set SALARY_GID.</p>':'<p class=mu>No data</p>';$('k2').innerHTML='';return}
  const fc=$('fc2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
  const G=S.filter(r=>r['Star Id']&&(!fc||N(r.Contractor)==N(fc))&&(!q||N(r['Star Name']+r['Star Id']).includes(q))).map(r=>({...r,days:num(r['#Working']),sh:num(r['#Deliveries'])})).map(r=>({...r,avg:r.days?(r.sh/r.days).toFixed(1):0}));
  const td=G.reduce((a,b)=>a+b.days,0),ts=G.reduce((a,b)=>a+b.sh,0);
