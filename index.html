@@ -38,7 +38,7 @@ button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 1
 const SHEET_ID="1SLqehjIKQ69Mwb3uUaByM2bqwMBhSNlxluruAtyAamQ";
 const TAB=n=>"https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);
 const PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRpdsHqNytYDH9FgSCI9iRduq8BSvS5zZkrr2VFMDahSR7TJHElHhSLuKil8PUSQg3Tq5CcV1y-w8hi/pub";
-const SCRIPT_URL=""; // paste Apps Script Web App URL here (ends with /exec)
+const SCRIPT_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRpdsHqNytYDH9FgSCI9iRduq8BSvS5zZkrr2VFMDahSR7TJHElHhSLuKil8PUSQg3Tq5CcV1y-w8hi/pub?output=csv"; // paste Apps Script Web App URL here (ends with /exec)
 const SALARY_GID=""; // gid of "Star salary" tab
 const ACQ_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Contractor ACQ"):null,PUB+"?output=csv",TAB("Contractor  ACQ ")].filter(Boolean);
 const SALARY_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Star salary"):null,SALARY_GID?PUB+"?gid="+SALARY_GID+"&single=true&output=csv":null,PUB+"?output=csv&sheet="+encodeURIComponent("Star salary"),TAB("Star salary")].filter(Boolean);
