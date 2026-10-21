@@ -42,7 +42,7 @@ const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxj7JHZV_xH5HHUWDGzQRE
 const SALARY_GID=""; // gid of "Star salary" tab
 const ACQ_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Contractor ACQ"):null,PUB+"?output=csv",TAB("Contractor  ACQ ")].filter(Boolean);
 const SALARY_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Star salary"):null,SALARY_GID?PUB+"?gid="+SALARY_GID+"&single=true&output=csv":null,PUB+"?output=csv&sheet="+encodeURIComponent("Star salary"),TAB("Star salary")].filter(Boolean);
-const REFRESH_MIN=2;
+const REFRESH_SEC=30;
 const ACCOUNTS=[
  {
   "email": "admin@bosta.co",
@@ -212,7 +212,7 @@ function login(){const e=N($('em').value),p=$('pw').value;const u=ACCOUNTS.find(
  if(!u){$('lerr').textContent='Wrong email or password';return}try{sessionStorage.u=JSON.stringify(u)}catch(_){}start(u)}
 function logout(){try{sessionStorage.removeItem('u')}catch(_){}location.reload()}
 function start(u){U=u;$('login').style.display='none';$('app').style.display='block';$('ttl').textContent=u.contractor=='*'?'All Contractors (Admin)':u.contractor;
- if(u.contractor!='*'){$('fcw').style.display='none';$('fc2w').style.display='none'}load();setInterval(load,REFRESH_MIN*60000)}
+ if(u.contractor!='*'){$('fcw').style.display='none';$('fc2w').style.display='none'}load();setInterval(load,REFRESH_SEC*1000)}
 function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':''}
 async function getSalary(){try{return await get(SALARY_URL,'#Working')}catch(e){
  const h=await (await fetch(PUB+'html?t='+Date.now())).text();const g=[...new Set([...h.matchAll(/gid[=:]\s*"?(\d+)/g)].map(m=>m[1]))];
@@ -225,7 +225,7 @@ const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+St
 async function load(){try{const a=await get(ACQ_URL,'status of star');A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));
  S=(await getSalary().catch(e=>{$('tb2').dataset.err=1;return []})).filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));
  fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));fill('fc2',S.map(r=>r.Contractor));
- $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_MIN+' min — Source: '+(window.SRC||'');r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
+ $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_SEC+' sec — Source: '+(window.SRC||'');r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
 function fill(id,vals){const s=$(id),c=s.value,u=[...new Set(vals.filter(Boolean).map(v=>v.trim()))].sort();s.innerHTML='<option value="">All</option>'+u.map(v=>`<option>${v}</option>`).join('');s.value=c}
 ['f1','f2','fs','fh','fc','fq'].forEach(i=>$(i).oninput=()=>r1());['fc2','fq2'].forEach(i=>$(i).oninput=()=>r2());
 function kp(el,arr){$(el).innerHTML=arr.map(([l,v])=>`<div class="card kpi"><span>${l}</span><b>${v}</b></div>`).join('')}
