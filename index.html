@@ -38,7 +38,7 @@ button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 1
 const SHEET_ID="1SLqehjIKQ69Mwb3uUaByM2bqwMBhSNlxluruAtyAamQ";
 const TAB=n=>"https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);
 const PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRpdsHqNytYDH9FgSCI9iRduq8BSvS5zZkrr2VFMDahSR7TJHElHhSLuKil8PUSQg3Tq5CcV1y-w8hi/pub";
-const SCRIPT_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRpdsHqNytYDH9FgSCI9iRduq8BSvS5zZkrr2VFMDahSR7TJHElHhSLuKil8PUSQg3Tq5CcV1y-w8hi/pub?output=csv"; // paste Apps Script Web App URL here (ends with /exec)
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxj7JHZV_xH5HHUWDGzQREfiaoHBJorFmY_HNw-rjBJXol2S_6SeFFRPGmtIB5S_NZY4A/exec"; // paste Apps Script Web App URL here (ends with /exec)
 const SALARY_GID=""; // gid of "Star salary" tab
 const ACQ_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Contractor ACQ"):null,PUB+"?output=csv",TAB("Contractor  ACQ ")].filter(Boolean);
 const SALARY_URL=[SCRIPT_URL?SCRIPT_URL+"?sheet="+encodeURIComponent("Star salary"):null,SALARY_GID?PUB+"?gid="+SALARY_GID+"&single=true&output=csv":null,PUB+"?output=csv&sheet="+encodeURIComponent("Star salary"),TAB("Star salary")].filter(Boolean);
@@ -217,7 +217,7 @@ function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?
 async function getSalary(){try{return await get(SALARY_URL,'#Working')}catch(e){
  const h=await (await fetch(PUB+'html?t='+Date.now())).text();const g=[...new Set([...h.matchAll(/gid[=:]\s*"?(\d+)/g)].map(m=>m[1]))];
  return await get(g.map(x=>PUB+'?gid='+x+'&single=true&output=csv'),'#Working')}}
-async function get(list,need){let err;for(const u of list){try{const r=await fetch(u+'&t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const t=await r.text();if(/^\s*</.test(t))throw Error('not CSV');const d=Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;if(d.length&&need in d[0])return d;throw Error('wrong tab')}catch(e){err=e}}throw err}
+async function get(list,need){let err;for(const u of list){try{const r=await fetch(u+'&t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const t=await r.text();if(/^\s*</.test(t))throw Error('not CSV');const d=Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;if(d.length&&need in d[0]){window.SRC=u.includes('/exec')?'LIVE (Apps Script)':'CACHED (Publish to web, ~5 min delay)';return d}throw Error('wrong tab')}catch(e){err=e}}throw err}
 const col=(r,re)=>Object.keys(r).find(k=>re.test(k));
 const mine=r=>{const k=col(r,/contractor|مقاول/i);return U.contractor=='*'||N(r[k])==N(U.contractor)};
 function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
@@ -225,7 +225,7 @@ const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+St
 async function load(){try{const a=await get(ACQ_URL,'status of star');A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));
  S=(await getSalary().catch(e=>{$('tb2').dataset.err=1;return []})).filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));
  fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));fill('fc2',S.map(r=>r.Contractor));
- $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_MIN+' min';r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
+ $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_MIN+' min — Source: '+(window.SRC||'');r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
 function fill(id,vals){const s=$(id),c=s.value,u=[...new Set(vals.filter(Boolean).map(v=>v.trim()))].sort();s.innerHTML='<option value="">All</option>'+u.map(v=>`<option>${v}</option>`).join('');s.value=c}
 ['f1','f2','fs','fh','fc','fq'].forEach(i=>$(i).oninput=()=>r1());['fc2','fq2'].forEach(i=>$(i).oninput=()=>r2());
 function kp(el,arr){$(el).innerHTML=arr.map(([l,v])=>`<div class="card kpi"><span>${l}</span><b>${v}</b></div>`).join('')}
