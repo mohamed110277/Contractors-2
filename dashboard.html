@@ -1,0 +1,241 @@
+<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contractors Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2433;--mu:#6b7280;--ac:#e30613;--bd:#e5e7eb;--ok:#0f9d58;--wr:#f59e0b}
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Segoe UI,sans-serif;background:var(--bg);color:var(--tx)}
+.wrap{max-width:1200px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+#login{max-width:380px;margin:12vh auto}input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;margin:6px 0 12px;font:inherit}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tabs button{background:#fff;color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi b{font-size:28px;display:block}.kpi span{color:var(--mu);font-size:13px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}th{background:#fafafa;cursor:pointer}
+.tag{padding:2px 8px;border-radius:10px;font-size:12px;color:#fff}.new{background:var(--ok)}.re{background:var(--wr)}
+.mu{color:var(--mu);font-size:13px}.err{color:var(--ac)}
+</style></head><body>
+<div id="login" class="card"><h2>Sign in</h2>
+<label>Email</label><input id="em" type="email"><label>Password</label><input id="pw" type="password">
+<button onclick="login()">Login</button><p id="lerr" class="err"></p></div>
+<div id="app" class="wrap" style="display:none">
+ <div class="card top"><div><h2 style="margin:0" id="ttl"></h2><span class="mu" id="upd"></span></div>
+ <div class="tabs"><button id="t1" class="on" onclick="tab(1)">Contractor ACQ</button> <button id="t2" onclick="tab(2)">Star Salary</button> <button onclick="logout()" style="margin-inline-start:8px">Logout</button></div></div>
+ <div id="v1"><div class="card filters">
+  <div><label class="mu">From date</label><input type="date" id="f1"></div><div><label class="mu">To date</label><input type="date" id="f2"></div>
+  <div><label class="mu">Status</label><select id="fs"><option value="">All</option><option>New Star</option><option>Reactivate</option></select></div>
+  <div><label class="mu">Hub</label><select id="fh"><option value="">All</option></select></div>
+  <div id="fcw"><label class="mu">Contractor</label><select id="fc"><option value="">All</option></select></div>
+  <div><label class="mu">Search</label><input id="fq" placeholder="Name / ID"></div></div>
+  <div class="kpis" id="k1"></div><br><div class="card tbl" id="tb1"></div></div>
+ <div id="v2" style="display:none"><div class="card filters"><div id="fc2w"><label class="mu">Contractor</label><select id="fc2"><option value="">All</option></select></div><div><label class="mu">Search</label><input id="fq2" placeholder="Name / ID"></div></div>
+  <div class="kpis" id="k2"></div><br><div class="card tbl" id="tb2"></div></div>
+</div>
+<script>
+// ===== Settings =====
+const SHEET_ID="1SLqehjIKQ69Mwb3uUaByM2bqwMBhSNlxluruAtyAamQ";
+const TAB=n=>"https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);
+const ACQ_URL=TAB("Contractor  ACQ ");
+const SALARY_URL=TAB("Star salary");
+const REFRESH_MIN=2;
+const ACCOUNTS=[
+ {
+  "email": "admin@bosta.co",
+  "password": "Admin@3160",
+  "contractor": "*"
+ },
+ {
+  "email": "capitalexpress@bosta.co",
+  "password": "Capi@5305",
+  "contractor": "Capital Express"
+ },
+ {
+  "email": "fullspeed@bosta.co",
+  "password": "Full@0400",
+  "contractor": "Full Speed"
+ },
+ {
+  "email": "topline@bosta.co",
+  "password": "Topl@4812",
+  "contractor": "Top Line"
+ },
+ {
+  "email": "trueexpress@bosta.co",
+  "password": "True@6953",
+  "contractor": "True Express"
+ },
+ {
+  "email": "speed@bosta.co",
+  "password": "Spee@9082",
+  "contractor": "Speed"
+ },
+ {
+  "email": "ownedfleetlm@bosta.co",
+  "password": "Owne@1138",
+  "contractor": "Owned Fleet – LM"
+ },
+ {
+  "email": "meshwarylimo@bosta.co",
+  "password": "Mesh@1563",
+  "contractor": "Meshwary Limo"
+ },
+ {
+  "email": "first@bosta.co",
+  "password": "Firs@5002",
+  "contractor": "First"
+ },
+ {
+  "email": "marzouk@bosta.co",
+  "password": "Marz@6435",
+  "contractor": "Marzouk"
+ },
+ {
+  "email": "kayanexpress@bosta.co",
+  "password": "Kaya@4276",
+  "contractor": "Kayan Express"
+ },
+ {
+  "email": "sprinta@bosta.co",
+  "password": "Spri@2558",
+  "contractor": "Sprinta"
+ },
+ {
+  "email": "egypt@bosta.co",
+  "password": "Egyp@7291",
+  "contractor": "Egypt"
+ },
+ {
+  "email": "gearz@bosta.co",
+  "password": "Gear@4714",
+  "contractor": "GearZ"
+ },
+ {
+  "email": "starteam@bosta.co",
+  "password": "Star@0675",
+  "contractor": "Star Team"
+ },
+ {
+  "email": "elhana@bosta.co",
+  "password": "Elha@8365",
+  "contractor": "El Hana"
+ },
+ {
+  "email": "pyramids@bosta.co",
+  "password": "Pyra@5489",
+  "contractor": "Pyramids"
+ },
+ {
+  "email": "novax@bosta.co",
+  "password": "Nova@4607",
+  "contractor": "Novax"
+ },
+ {
+  "email": "dana@bosta.co",
+  "password": "Dana@6982",
+  "contractor": "Dana"
+ },
+ {
+  "email": "daynamic@bosta.co",
+  "password": "Dayn@3604",
+  "contractor": "Daynamic"
+ },
+ {
+  "email": "felengaz@bosta.co",
+  "password": "Fele@1107",
+  "contractor": "Felengaz"
+ },
+ {
+  "email": "elalamia@bosta.co",
+  "password": "Elal@1238",
+  "contractor": "El Alamia"
+ },
+ {
+  "email": "movepoint@bosta.co",
+  "password": "Move@0458",
+  "contractor": "Move Point"
+ },
+ {
+  "email": "tmp@bosta.co",
+  "password": "Tmp@8824",
+  "contractor": "TMP"
+ },
+ {
+  "email": "speedlight@bosta.co",
+  "password": "Spee@3891",
+  "contractor": "Speed Light"
+ },
+ {
+  "email": "sahl@bosta.co",
+  "password": "Sahl@1224",
+  "contractor": "Sahl"
+ },
+ {
+  "email": "runexpress@bosta.co",
+  "password": "Rune@5204",
+  "contractor": "Run Express"
+ },
+ {
+  "email": "smart@bosta.co",
+  "password": "Smar@3596",
+  "contractor": "Smart"
+ },
+ {
+  "email": "alfarajexpress@bosta.co",
+  "password": "Alfa@5660",
+  "contractor": "Al Faraj Express"
+ },
+ {
+  "email": "ofdexpress@bosta.co",
+  "password": "Ofde@8787",
+  "contractor": "OFD Express"
+ },
+ {
+  "email": "faz3aexpress@bosta.co",
+  "password": "Faz3@3316",
+  "contractor": "Faz3a Express"
+ },
+ {
+  "email": "forbrothers@bosta.co",
+  "password": "Forb@0021",
+  "contractor": "For brothers"
+ }
+];
+// ====================
+let U=null,A=[],S=[],sort={};
+const $=i=>document.getElementById(i),N=s=>(s||'').toString().trim().toLowerCase();
+function login(){const e=N($('em').value),p=$('pw').value;const u=ACCOUNTS.find(a=>a.email.toLowerCase()==e&&a.password==p);
+ if(!u){$('lerr').textContent='Wrong email or password';return}try{sessionStorage.u=JSON.stringify(u)}catch(_){}start(u)}
+function logout(){try{sessionStorage.removeItem('u')}catch(_){}location.reload()}
+function start(u){U=u;$('login').style.display='none';$('app').style.display='block';$('ttl').textContent=u.contractor=='*'?'All Contractors (Admin)':u.contractor;
+ if(u.contractor!='*'){$('fcw').style.display='none';$('fc2w').style.display='none'}load();setInterval(load,REFRESH_MIN*60000)}
+function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':''}
+const get=u=>fetch(u+(u.includes('?')?'&':'?')+'t='+Date.now()).then(r=>r.text()).then(t=>Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data);
+const col=(r,re)=>Object.keys(r).find(k=>re.test(k));
+const mine=r=>{const k=col(r,/contractor|مقاول/i);return U.contractor=='*'||N(r[k])==N(U.contractor)};
+function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
+const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'';
+async function load(){try{const a=await get(ACQ_URL);A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));
+ S=(await get(SALARY_URL)).filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));
+ fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));fill('fc2',S.map(r=>r.Contractor));
+ $('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_MIN+' min';r1();r2()}catch(e){$('upd').innerHTML='<span class=err>Failed to load data: '+e.message+'</span>'}}
+function fill(id,vals){const s=$(id),c=s.value,u=[...new Set(vals.filter(Boolean).map(v=>v.trim()))].sort();s.innerHTML='<option value="">All</option>'+u.map(v=>`<option>${v}</option>`).join('');s.value=c}
+['f1','f2','fs','fh','fc','fq'].forEach(i=>$(i).oninput=()=>r1());['fc2','fq2'].forEach(i=>$(i).oninput=()=>r2());
+function kp(el,arr){$(el).innerHTML=arr.map(([l,v])=>`<div class="card kpi"><span>${l}</span><b>${v}</b></div>`).join('')}
+function table(el,cols,rows,key){const s=sort[key];if(s)rows=[...rows].sort((a,b)=>{let x=a[s.c],y=b[s.c];const nx=parseFloat(x),ny=parseFloat(y);if(!isNaN(nx)&&!isNaN(ny)){x=nx;y=ny}return (x>y?1:x<y?-1:0)*s.d});
+ $(el).innerHTML=`<table><tr>${cols.map(c=>`<th onclick="srt('${key}','${c[0]}')">${c[1]}</th>`).join('')}</tr>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c[2]?c[2](r):(r[c[0]]??'')}</td>`).join('')}</tr>`).join('')}</table><p class=mu>${rows.length} rows</p>`}
+function srt(k,c){const s=sort[k];sort[k]={c,d:s&&s.c==c?-s.d:1};k=='a'?r1():r2()}
+function r1(){const f1=$('f1').value,f2=$('f2').value,fs=$('fs').value,fh=$('fh').value,fc=$('fc').value,q=N($('fq').value);
+ const R=A.filter(r=>(!f1||iso(r._d)>=f1)&&(!f2||iso(r._d)<=f2)&&(!fs||N(r['status of star'])==N(fs))&&(!fh||r.Hub.trim()==fh)&&(!fc||N(r.contractor)==N(fc))&&(!q||N(r['Full Name']+r['Star Id']+r['Star Fawry Id']).includes(q)));
+ const t=iso(new Date());kp('k1',[['Total Stars',R.length],['New Star',R.filter(r=>N(r['status of star'])=='new star').length],['Reactivate',R.filter(r=>N(r['status of star'])=='reactivate').length],['Joined Today',R.filter(r=>iso(r._d)==t).length],['Hubs',new Set(R.map(r=>r.Hub)).size]]);
+ R.forEach(r=>r._ds=iso(r._d));
+ table('tb1',[['_ds','Joined At'],['Star Id','Star Id'],['Full Name','Name'],['Hub','Hub'],['Star Fawry Id','Fawry Id'],['Vehicle Type','Vehicle'],['contractor','Contractor'],['status of star','Status',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
+function r2(){if(!S.length){$('tb2').innerHTML='<p class=mu>No data</p>';$('k2').innerHTML='';return}
+ const fc=$('fc2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
+ const G=S.filter(r=>r['Star Id']&&(!fc||N(r.Contractor)==N(fc))&&(!q||N(r['Star Name']+r['Star Id']).includes(q))).map(r=>({...r,days:num(r['#Working']),sh:num(r['#Deliveries'])})).map(r=>({...r,avg:r.days?(r.sh/r.days).toFixed(1):0}));
+ const td=G.reduce((a,b)=>a+b.days,0),ts=G.reduce((a,b)=>a+b.sh,0);
+ kp('k2',[['Stars',G.length],['Total Deliveries',ts.toLocaleString('en')],['Total Working Days',td.toLocaleString('en')],['Avg Deliveries/Day',td?(ts/td).toFixed(1):0]]);
+ table('tb2',[['Star Id','Star Id'],['Star Name','Name'],['Contractor','Contractor'],['Hub','Hub'],['Zone','Zone'],['Vehicle Type','Vehicle'],['days','Working Days'],['sh','Deliveries'],['avg','Avg/Day']],G,'b')}
+try{const u=sessionStorage.u&&JSON.parse(sessionStorage.u);if(u)start(u)}catch(_){}
+</script></body></html>
