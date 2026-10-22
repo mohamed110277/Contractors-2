@@ -12,11 +12,11 @@ button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 1
 #app{display:flex;min-height:100vh}.side{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);padding:20px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}.home{font-size:22px;font-weight:700;padding:4px 10px 16px;border-bottom:1px solid var(--bd);margin-bottom:12px}.tabs{display:flex;flex-direction:column;gap:8px}.tabs button{width:100%;text-align:left;background:#fff;color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .kpi b{font-size:28px;display:block}.kpi span{color:var(--mu);font-size:13px}
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 12px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}th{background:#1f4fa8;color:#fff;font-weight:700;cursor:pointer;position:sticky;top:0;z-index:1}.tbl,.card.tbl{overflow:visible;padding:0}table{font-size:13px;table-layout:auto}th,td{white-space:normal!important;word-break:normal;overflow-wrap:normal;padding:8px 6px!important}.tbl p{padding:0 12px}.tag{white-space:nowrap}th:first-child{border-top-left-radius:12px}th:last-child{border-top-right-radius:12px}
 .tag{padding:2px 8px;border-radius:10px;font-size:12px;color:#fff}.new{background:var(--ok)}.re{background:var(--wr)}
 .mu{color:var(--mu);font-size:13px}.err{color:var(--ac)}
-.out{margin-top:auto;background:#fff;color:var(--tx);border:1px solid var(--bd)}@media(max-width:700px){#app{flex-direction:column}.side{width:auto;height:auto;position:static}.tabs{flex-direction:row}}</style></head><body>
+.out{margin-top:auto;background:#fff;color:var(--tx);border:1px solid var(--bd)}@media(max-width:700px){#app{flex-direction:column}.side{width:auto;height:auto;position:static}.tabs{flex-direction:row}}.fx{position:relative}.fx input,.fx select{padding-right:60px}.fx input[type=date]{padding-right:56px}.clr{position:absolute;right:34px;top:50%;transform:translateY(-50%);background:none;color:var(--mu);border:0;padding:2px 6px;font-size:16px;line-height:1;display:none}.clr:hover{color:var(--ac)}.fx.has .clr{display:block}</style></head><body>
 <div id="login" class="card"><h2>Sign in</h2>
 <label>Email</label><input id="em" type="email"><label>Password</label><input id="pw" type="password">
 <button onclick="login()">Login</button><p id="lerr" class="err"></p></div>
@@ -24,11 +24,11 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 12px
  <div class="card top"><div><h2 style="margin:0" id="ttl"></h2><span class="mu" id="upd"></span></div></div>
 
  <div id="v1"><div class="card filters">
-  <div><label class="mu">From date</label><input type="date" id="f1"></div><div><label class="mu">To date</label><input type="date" id="f2"></div>
-  <div><label class="mu">Status</label><select id="fs"><option value="">All</option><option>New Star</option><option>Reactivate</option></select></div>
+  <div><label class="mu">Search</label><input id="fq" placeholder="Name / ID"></div>
   <div><label class="mu">Hub</label><select id="fh"><option value="">All</option></select></div>
+  <div><label class="mu">Status</label><select id="fs"><option value="">All</option><option>New Star</option><option>Reactivate</option></select></div>
   <div id="fcw"><label class="mu">Contractor</label><select id="fc"><option value="">All</option></select></div>
-  <div><label class="mu">Search</label><input id="fq" placeholder="Name / ID"></div></div>
+  <div><label class="mu">From date</label><input type="date" id="f1"></div><div><label class="mu">To date</label><input type="date" id="f2"></div></div>
   <div class="kpis" id="k1"></div><br><div class="card tbl" id="tb1"></div></div>
  <div id="v2" style="display:none"><div class="card filters"><div id="fc2w"><label class="mu">Contractor</label><select id="fc2"><option value="">All</option></select></div><div><label class="mu">Search</label><input id="fq2" placeholder="Name / ID"></div></div>
   <div class="kpis" id="k2"></div><br><div class="card tbl" id="tb2"></div></div>
@@ -241,7 +241,9 @@ function r2(){if(!S.length){$('tb2').innerHTML=$('tb2').dataset.err?'<p class=er
  const fc=$('fc2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
  const G=S.filter(r=>r['Star Id']&&(!fc||N(r.Contractor)==N(fc))&&(!q||N(r['Star Name']+r['Star Id']).includes(q))).map(r=>({...r,days:num(r['#Working']),sh:num(r['#Deliveries'])})).map(r=>({...r,avg:r.days?(r.sh/r.days).toFixed(1):0}));
  const td=G.reduce((a,b)=>a+b.days,0),ts=G.reduce((a,b)=>a+b.sh,0);
- kp('k2',[['Stars',G.length],['Total Deliveries',ts.toLocaleString('en')],['Total Working Days',td.toLocaleString('en')],['Avg Deliveries/Day',td?(ts/td).toFixed(1):0]]);
- table('tb2',[['Star Id','Star Id'],['Star Name','Name'],['Contractor','Contractor'],['Hub','Hub'],['Zone','Zone'],['Vehicle Type','Vehicle'],['days','Working Days'],['sh','Deliveries'],['avg','Avg/Day']],G,'b')}
+ kp('k2',[['Stars',G.length],['Total Deliveries',ts.toLocaleString('en')],['Total Working Days',td.toLocaleString('en')]]);
+ table('tb2',[['Star Id','Star Id'],['Star Name','Name'],['Contractor','Contractor'],['Hub','Hub'],['Zone','Zone'],['Vehicle Type','Vehicle'],['days','Working Days'],['sh','Deliveries']],G,'b')}
+['fq','fh','fs','fc','f1','f2','fc2','fq2'].forEach(id=>{const el=$(id),w=document.createElement('div');w.className='fx';el.parentNode.insertBefore(w,el);w.appendChild(el);const x=document.createElement('button');x.className='clr';x.type='button';x.textContent='✕';x.title='Clear';w.appendChild(x);
+ const upd=()=>w.classList.toggle('has',!!el.value);x.onclick=()=>{el.value='';upd();el.dispatchEvent(new Event('input'))};el.addEventListener('input',upd);el.addEventListener('change',upd)});
 try{const u=sessionStorage.u&&JSON.parse(sessionStorage.u);if(u)start(u)}catch(_){}
 </script></body></html>
