@@ -332,7 +332,11 @@ function landDate(r){const t=(r['Date']||'').toString();const m=t.match(/([A-Za-
   if(!y){y=new Date().getFullYear();if(new Date(y,mo,+m[2])>new Date(Date.now()+864e5*2))y--}
   return new Date(y,mo,+m[2])}
  const d=pd(t);return d||pd(r['Joined At'])}
-function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
+function pd(s){if(!s)return null;s=s.toString().trim();if(!s)return null;
+ let m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);if(m)return new Date(+m[1],m[2]-1,+m[3]);
+ m=s.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);if(m){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;let mo=a,d=b;if(a>12&&b<=12){mo=b;d=a}return new Date(y,mo-1,d)}
+ if(/^\d{5}(\.\d+)?$/.test(s)){return new Date(Math.round((+s-25569)*864e5)+new Date().getTimezoneOffset()*6e4)}
+ const d=new Date(s.replace(/^[A-Za-z]+,\s*/,''));return isNaN(d)?null:d}
 const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'';
 let RAW={a:null,s:null},busy=false;
 const ck=k=>'cache_'+k;function cget(k){try{return JSON.parse(localStorage.getItem(ck(k)))}catch(_){return null}}function cset(k,v){try{localStorage.setItem(ck(k),JSON.stringify(v))}catch(_){}}
@@ -356,7 +360,7 @@ function srt(k,c){const s=sort[k];sort[k]={c,d:s&&s.c==c?-s.d:1};k=='a'?r1():r2(
 function r1(){const f1=$('f1').value,f2=$('f2').value,fs=$('fs').value,fh=$('fh').value,fc=$('fc').value,q=N($('fq').value);
  const R=A.filter(r=>(!f1||iso(r._d)>=f1)&&(!f2||iso(r._d)<=f2)&&(!fs||N(r['status of star'])==N(fs))&&(!fh||r.Hub.trim()==fh)&&(!fc||N(r.contractor)==N(fc))&&(!q||N(r['Full Name']+r['Star Id']+r['Star Fawry Id']).includes(q)));
  const t=iso(new Date());kp('k1',[['Total Stars',R.length],['New Star',R.filter(r=>N(r['status of star'])=='new star').length],['Reactivate',R.filter(r=>N(r['status of star'])=='reactivate').length],['Joined Today',R.filter(r=>iso(r._d)==t).length],['Hubs',new Set(R.map(r=>r.Hub)).size]]);
- R.forEach(r=>{r._ds=iso(pd(r['Joined At']))});
+ R.forEach(r=>{const d=pd(r['Joined At']);r._ds=d?iso(d):(r['Joined At']||'')});
  window.R1=R;table('tb1',[['Date','Date'],['Star Id','Star Id'],['Full Name','Full Name'],['Hub','Hub'],['Star Fawry Id','Star Fawry Id'],['_ds','Joined At'],['Vehicle Type','Vehicle Type'],['contractor','contractor'],['status of star','status of star',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
 function r2(){if(!S.length){$('tb2').innerHTML=$('tb2').dataset.err?'<p class=err>Could not load the Star salary tab. Please make sure the whole sheet is published (File → Share → Publish to web → Entire document).</p>':'<p class=mu>No data</p>';$('k2').innerHTML='';return}
  const fc=$('fc2').value,fh=$('fh2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
