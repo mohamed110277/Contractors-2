@@ -4,25 +4,25 @@
 <style>
 :root{--bg:#f5f6f8;--card:#fff;--tx:#1d2433;--mu:#6b7280;--ac:#e30613;--bd:#e5e7eb;--ok:#0f9d58;--wr:#f59e0b}
 *{box-sizing:border-box}body{margin:0;font-family:Tahoma,Segoe UI,sans-serif;background:var(--bg);color:var(--tx)}
-.wrap{max-width:1200px;margin:auto;padding:16px}
+.wrap{flex:1;min-width:0;margin:0;padding:16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
 #login{max-width:380px;margin:12vh auto}input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;margin:6px 0 12px;font:inherit}
 button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.tabs button{background:#fff;color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
+#app{display:flex;min-height:100vh}.side{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);padding:20px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}.home{font-size:22px;font-weight:700;padding:4px 10px 16px;border-bottom:1px solid var(--bd);margin-bottom:12px}.tabs{display:flex;flex-direction:column;gap:8px}.tabs button{width:100%;text-align:left;background:#fff;color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .kpi b{font-size:28px;display:block}.kpi span{color:var(--mu);font-size:13px}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}th{background:#fafafa;cursor:pointer}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px 12px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}th{background:#1f4fa8;color:#fff;font-weight:700;cursor:pointer;position:sticky;top:0;z-index:1}.tbl{max-height:75vh;overflow:auto}table{font-size:15px}
 .tag{padding:2px 8px;border-radius:10px;font-size:12px;color:#fff}.new{background:var(--ok)}.re{background:var(--wr)}
 .mu{color:var(--mu);font-size:13px}.err{color:var(--ac)}
-</style></head><body>
+.out{margin-top:auto;background:#fff;color:var(--tx);border:1px solid var(--bd)}@media(max-width:700px){#app{flex-direction:column}.side{width:auto;height:auto;position:static}.tabs{flex-direction:row}}</style></head><body>
 <div id="login" class="card"><h2>Sign in</h2>
 <label>Email</label><input id="em" type="email"><label>Password</label><input id="pw" type="password">
 <button onclick="login()">Login</button><p id="lerr" class="err"></p></div>
-<div id="app" class="wrap" style="display:none">
- <div class="card top"><div><h2 style="margin:0" id="ttl"></h2><span class="mu" id="upd"></span></div>
- <div class="tabs"><button id="t1" class="on" onclick="tab(1)">Contractor ACQ</button> <button id="t2" onclick="tab(2)">Star Salary</button> <button onclick="logout()" style="margin-inline-start:8px">Logout</button></div></div>
+<div id="app" style="display:none"><aside class="side"><div class="home">Home</div><div class="tabs"><button id="t1" class="on" onclick="tab(1)">Contractor ACQ</button><button id="t2" onclick="tab(2)">Star Salary</button></div><button class="out" onclick="logout()">Logout</button></aside><main class="wrap">
+ <div class="card top"><div><h2 style="margin:0" id="ttl"></h2><span class="mu" id="upd"></span></div></div>
+
  <div id="v1"><div class="card filters">
   <div><label class="mu">From date</label><input type="date" id="f1"></div><div><label class="mu">To date</label><input type="date" id="f2"></div>
   <div><label class="mu">Status</label><select id="fs"><option value="">All</option><option>New Star</option><option>Reactivate</option></select></div>
@@ -32,7 +32,7 @@ button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 1
   <div class="kpis" id="k1"></div><br><div class="card tbl" id="tb1"></div></div>
  <div id="v2" style="display:none"><div class="card filters"><div id="fc2w"><label class="mu">Contractor</label><select id="fc2"><option value="">All</option></select></div><div><label class="mu">Search</label><input id="fq2" placeholder="Name / ID"></div></div>
   <div class="kpis" id="k2"></div><br><div class="card tbl" id="tb2"></div></div>
-</div>
+</main></div>
 <script>
 // ===== Settings =====
 const SHEET_ID="1SLqehjIKQ69Mwb3uUaByM2bqwMBhSNlxluruAtyAamQ";
@@ -211,7 +211,7 @@ const $=i=>document.getElementById(i),N=s=>(s||'').toString().trim().toLowerCase
 function login(){const e=N($('em').value),p=$('pw').value;const u=ACCOUNTS.find(a=>a.email.toLowerCase()==e&&a.password==p);
  if(!u){$('lerr').textContent='Wrong email or password';return}try{sessionStorage.u=JSON.stringify(u)}catch(_){}start(u)}
 function logout(){try{sessionStorage.removeItem('u')}catch(_){}location.reload()}
-function start(u){U=u;$('login').style.display='none';$('app').style.display='block';$('ttl').textContent=u.contractor=='*'?'All Contractors (Admin)':u.contractor;
+function start(u){U=u;$('login').style.display='none';$('app').style.display='flex';$('ttl').textContent=u.contractor=='*'?'All Contractors (Admin)':u.contractor;
  if(u.contractor!='*'){$('fcw').style.display='none';$('fc2w').style.display='none'}load();setInterval(load,REFRESH_SEC*1000)}
 function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':''}
 async function getSalary(){try{return await get(SALARY_URL,'#Working')}catch(e){
@@ -236,7 +236,7 @@ function r1(){const f1=$('f1').value,f2=$('f2').value,fs=$('fs').value,fh=$('fh'
  const R=A.filter(r=>(!f1||iso(r._d)>=f1)&&(!f2||iso(r._d)<=f2)&&(!fs||N(r['status of star'])==N(fs))&&(!fh||r.Hub.trim()==fh)&&(!fc||N(r.contractor)==N(fc))&&(!q||N(r['Full Name']+r['Star Id']+r['Star Fawry Id']).includes(q)));
  const t=iso(new Date());kp('k1',[['Total Stars',R.length],['New Star',R.filter(r=>N(r['status of star'])=='new star').length],['Reactivate',R.filter(r=>N(r['status of star'])=='reactivate').length],['Joined Today',R.filter(r=>iso(r._d)==t).length],['Hubs',new Set(R.map(r=>r.Hub)).size]]);
  R.forEach(r=>r._ds=iso(r._d));
- table('tb1',[['_ds','Joined At'],['Star Id','Star Id'],['Full Name','Name'],['Hub','Hub'],['Star Fawry Id','Fawry Id'],['Vehicle Type','Vehicle'],['contractor','Contractor'],['status of star','Status',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
+ table('tb1',[['Date','Date'],['Star Id','Star Id'],['Full Name','Full Name'],['Hub','Hub'],['Star Fawry Id','Star Fawry Id'],['_ds','Joined At'],['Vehicle Type','Vehicle Type'],['contractor','contractor'],['status of star','status of star',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
 function r2(){if(!S.length){$('tb2').innerHTML=$('tb2').dataset.err?'<p class=err>Could not load the Star salary tab. Please make sure the whole sheet is published (File → Share → Publish to web → Entire document).</p>':'<p class=mu>No data</p>';$('k2').innerHTML='';return}
  const fc=$('fc2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
  const G=S.filter(r=>r['Star Id']&&(!fc||N(r.Contractor)==N(fc))&&(!q||N(r['Star Name']+r['Star Id']).includes(q))).map(r=>({...r,days:num(r['#Working']),sh:num(r['#Deliveries'])})).map(r=>({...r,avg:r.days?(r.sh/r.days).toFixed(1):0}));
