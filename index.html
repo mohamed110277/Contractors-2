@@ -242,13 +242,19 @@ async function getSalary(){try{return await get(SALARY_URL,'#Working')}catch(e){
 async function get(list,need){let err;for(const u of list){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),u.includes('/exec')?6000:8000);const r=await fetch(u+'&t='+Date.now(),{cache:'no-store',signal:ac.signal});clearTimeout(tm);if(!r.ok)throw Error('HTTP '+r.status);const t=await r.text();if(/^\s*</.test(t))throw Error('not CSV');const d=Papa.parse(t,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;if(d.length&&need in d[0]){window.SRC=u.includes('/exec')?'LIVE (Apps Script)':'CACHED (Publish to web, ~5 min delay)';return d}throw Error('wrong tab')}catch(e){err=e}}throw err}
 const col=(r,re)=>Object.keys(r).find(k=>re.test(k));
 const mine=r=>{const k=col(r,/contractor|مقاول/i);return U.contractor=='*'||N(r[k])==N(U.contractor)};
+const MN={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function landDate(r){const t=(r['Date']||'').toString();const m=t.match(/([A-Za-z]{3,})\.?\s+(\d{1,2})(?:\D+(\d{4}))?/);
+ if(m&&MN[m[1].slice(0,3).toLowerCase()]!=null){const mo=MN[m[1].slice(0,3).toLowerCase()];let y=m[3]?+m[3]:null;
+  if(!y){const j=pd(r['Joined At']);y=j&&j.getMonth()==mo?j.getFullYear():new Date().getFullYear();const cand=new Date(y,mo,+m[2]);if(!m[3]&&cand>new Date(Date.now()+864e5*2))y--}
+  return new Date(y,mo,+m[2])}
+ const d=pd(t);return d||pd(r['Joined At'])}
 function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
 const iso=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):'';
 let RAW={a:null,s:null},busy=false;
 const ck=k=>'cache_'+k;function cget(k){try{return JSON.parse(localStorage.getItem(ck(k)))}catch(_){return null}}function cset(k,v){try{localStorage.setItem(ck(k),JSON.stringify(v))}catch(_){}}
 function fetchRaw(){return [get(ACQ_URL,'status of star').then(d=>{RAW.a=d;cset('a',d);return d}),getSalary().then(d=>{RAW.s=d;cset('s',d);return d})]}
 let PRE=fetchRaw();PRE.forEach(p=>p.catch(()=>{})); // start downloading as soon as the page opens
-function showA(a){A=a.filter(mine).map(r=>({...r,_d:pd(r['Joined At'])}));fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));r1();if(CUR==3)charts()}
+function showA(a){A=a.filter(mine).map(r=>({...r,_d:landDate(r)}));fill('fh',A.map(r=>r.Hub));fill('fc',A.map(r=>r['contractor']));r1();if(CUR==3)charts()}
 function showS(d){S=d.filter(r=>U.contractor=='*'||N(r.Contractor)==N(U.contractor));fill('fc2',S.map(r=>r.Contractor));fill('fh2',S.map(r=>r.Hub));r2()}
 function stamp(){$('upd').textContent='Last update: '+new Date().toLocaleTimeString('en-GB')+' — auto-refresh every '+REFRESH_SEC+' sec'}
 let first=true;
@@ -266,7 +272,7 @@ function srt(k,c){const s=sort[k];sort[k]={c,d:s&&s.c==c?-s.d:1};k=='a'?r1():r2(
 function r1(){const f1=$('f1').value,f2=$('f2').value,fs=$('fs').value,fh=$('fh').value,fc=$('fc').value,q=N($('fq').value);
  const R=A.filter(r=>(!f1||iso(r._d)>=f1)&&(!f2||iso(r._d)<=f2)&&(!fs||N(r['status of star'])==N(fs))&&(!fh||r.Hub.trim()==fh)&&(!fc||N(r.contractor)==N(fc))&&(!q||N(r['Full Name']+r['Star Id']+r['Star Fawry Id']).includes(q)));
  const t=iso(new Date());kp('k1',[['Total Stars',R.length],['New Star',R.filter(r=>N(r['status of star'])=='new star').length],['Reactivate',R.filter(r=>N(r['status of star'])=='reactivate').length],['Joined Today',R.filter(r=>iso(r._d)==t).length],['Hubs',new Set(R.map(r=>r.Hub)).size]]);
- R.forEach(r=>r._ds=iso(r._d));
+ R.forEach(r=>{r._ds=iso(pd(r['Joined At']))});
  table('tb1',[['Date','Date'],['Star Id','Star Id'],['Full Name','Full Name'],['Hub','Hub'],['Star Fawry Id','Star Fawry Id'],['_ds','Joined At'],['Vehicle Type','Vehicle Type'],['contractor','contractor'],['status of star','status of star',r=>`<span class="tag ${N(r['status of star'])=='new star'?'new':'re'}">${r['status of star']||''}</span>`]],R,'a')}
 function r2(){if(!S.length){$('tb2').innerHTML=$('tb2').dataset.err?'<p class=err>Could not load the Star salary tab. Please make sure the whole sheet is published (File → Share → Publish to web → Entire document).</p>':'<p class=mu>No data</p>';$('k2').innerHTML='';return}
  const fc=$('fc2').value,fh=$('fh2').value,q=N($('fq2').value),num=v=>parseFloat((v||'0').toString().replace(/,/g,''))||0;
