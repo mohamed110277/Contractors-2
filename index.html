@@ -245,7 +245,7 @@ const mine=r=>{const k=col(r,/contractor|مقاول/i);return U.contractor=='*'|
 const MN={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 function landDate(r){const t=(r['Date']||'').toString();const m=t.match(/([A-Za-z]{3,})\.?\s+(\d{1,2})(?:\D+(\d{4}))?/);
  if(m&&MN[m[1].slice(0,3).toLowerCase()]!=null){const mo=MN[m[1].slice(0,3).toLowerCase()];let y=m[3]?+m[3]:null;
-  if(!y){const j=pd(r['Joined At']);y=j&&j.getMonth()==mo?j.getFullYear():new Date().getFullYear();const cand=new Date(y,mo,+m[2]);if(!m[3]&&cand>new Date(Date.now()+864e5*2))y--}
+  if(!y){y=new Date().getFullYear();if(new Date(y,mo,+m[2])>new Date(Date.now()+864e5*2))y--}
   return new Date(y,mo,+m[2])}
  const d=pd(t);return d||pd(r['Joined At'])}
 function pd(s){if(!s)return null;const m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return new Date(+m[3],m[1]-1,+m[2]);const d=new Date(s);return isNaN(d)?null:d}
