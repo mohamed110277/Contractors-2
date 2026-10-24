@@ -276,8 +276,7 @@ function renderHub(){const h=HUBS.find(x=>hk(x.name)==OPEN);if(!h)return closeHu
  const vt=(id,t,sub,off)=>`<button class="vt ${VT==id?'on':''} ${off?'off':''}" ${off?'disabled':`onclick="VT='${id}';renderHub()"`}><b>${t}</b><small>${sub}</small></button>`;
  const zs=k=>k+' zone'+(k>1?'s':'');let body;
  if(VT=='l'){const l=h.loc;if(l){const url=l.ll?`https://www.google.com/maps?q=${l.ll[0].toFixed(6)},${l.ll[1].toFixed(6)}`:'';window._LOC={raw:l.raw,addr:l.addr,url,all:`${h.name}\n${l.raw}\n${l.addr}${url?'\n'+url:''}`};
-  body=`<div class="locb"><div class="cpy" onclick="copyTxt(_LOC.raw)" title="Click to copy"><span class="mu">Coordinates</span><div>${l.raw}</div><em>📋 Copy</em></div>
-  <div class="cpy" onclick="copyTxt(_LOC.addr)" title="Click to copy"><span class="mu">Address</span><div dir="auto">${l.addr}</div><em>📋 Copy</em></div>
+  body=`<div class="locb"><div class="cpy" onclick="copyTxt(_LOC.addr)" title="Click to copy"><span class="mu">Address</span><div dir="auto">${l.addr}</div><em>📋 Copy</em></div>
   ${url?`<div class="cpy" onclick="copyTxt(_LOC.url)" title="Click to copy"><span class="mu">Google Maps link</span><div class="u">${url}</div><em>📋 Copy</em></div>`:''}
   <div class="lbtn"><button onclick="copyTxt(_LOC.all)">📋 Copy full location</button>${url?`<a class="dl lnk" target="_blank" rel="noopener" href="${url}">📍 Open in Google Maps</a>`:''}</div>
   ${l.ll?`<iframe class="mapf" loading="lazy" src="https://maps.google.com/maps?q=${l.ll[0].toFixed(6)},${l.ll[1].toFixed(6)}&z=15&output=embed"></iframe>`:''}</div>`}else body='<p class=mu>No location found for this hub in the Hub Location tab.</p>'}
